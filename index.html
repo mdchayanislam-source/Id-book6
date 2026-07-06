@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Office ID Cards - Pro Signature</title>
+    <!-- ফন্টগুলো লোড হচ্ছে -->
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        @page { size: A4; margin: 0mm !important; }
+        *, *::before, *::after { box-sizing: border-box; }
+        html, body { margin: 0 !important; padding: 0 !important; width: 210mm; font-family: 'Siyam Rupali', Arial, sans-serif; background-color: #f0f2f5; }
+        
+        .editable { outline: none; }
+        [contenteditable]:focus { outline: 1px dashed #ccc; }
+
+        .control-bar { width: 100%; max-width: 210mm; margin: 0 auto; background-color: #1a1a1a; padding: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.5); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+        .control-left { display: flex; align-items: center; gap: 15px; }
+        .font-select { padding: 6px 12px; font-size: 14px; border-radius: 4px; border: 1px solid #444; background: #333; color: #fff; outline: none; cursor: pointer; }
+        
+        .logo-circle { 
+            width: 60px; height: 60px; background-color: #1a1a1a; border-radius: 50%; display: flex; flex-direction: column; 
+            justify-content: center; align-items: center; margin-left: 10px; line-height: 1.1;
+            border: 2px solid #ff0000; box-shadow: 0 0 15px 5px rgba(255, 0, 0, 0.6), inset 0 0 10px rgba(255, 0, 0, 0.3);
+        }
+        .fmf-text { font-weight: bold; color: #ff0000; font-size: 14px; text-shadow: 0 0 5px #ff0000; }
+        .nayon-text { font-weight: bold; color: #ffffff; font-size: 10px; }
+
+        .control-right { display: flex; gap: 10px; }
+        .btn-sig { background-color: #6f42c1; color: white; border: none; padding: 8px 15px; font-weight: bold; border-radius: 4px; cursor: pointer; }
+        .btn-add { background-color: #007bff; color: white; border: none; padding: 8px 15px; font-weight: bold; border-radius: 4px; cursor: pointer; }
+        .btn-print { background-color: #28a745; color: white; border: none; padding: 8px 20px; font-weight: bold; border-radius: 4px; cursor: pointer; }
+
+        .page-container { width: 210mm; min-height: 297mm; margin: 10px auto; background-color: #ffffff; padding: 10mm 5mm; position: relative; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .card-pair-wrapper { display: flex; justify-content: center; align-items: center; width: 176mm; margin: 0 auto 5mm auto; border: 1.5px dashed #b3b3b3; padding: 2px; }
+        .card-pair-wrapper:nth-child(4n) { break-after: page; }
+        .id-card { width: 86mm; height: 54mm; border: 1px solid #999999; border-radius: 4px; position: relative; background-color: #ffffff; overflow: hidden; font-size: 8pt; line-height: 1.2; color: #000000; text-align: left; }
+        .header { text-align: center; padding: 6px 14mm 2px 14mm; position: relative; }
+        .company-name { font-size: 11pt; font-weight: bold; color: #000000; margin: 0; }
+        .company-address { font-size: 6.5pt; color: #444444; margin: 1px 0 0 0; }
+        .title-bar { text-align: center; margin: 13px 0 4px 0; }
+        .title-text { font-size: 8.5pt; font-weight: bold; }
+        .photo-box { position: absolute; top: 2mm; right: 2.5mm; width: 14mm; height: 14mm; border: 1px dashed #888888; text-align: center; background-color: #fafafa; cursor: pointer; overflow: hidden; z-index: 10; }
+        .photo-box.has-image { border: none; }
+        .photo-box img { width: 100%; height: 100%; object-fit: cover; display: none; }
+        .photo-text { font-size: 5.5pt; color: #999999; display: block; margin-top: 4mm; line-height: 1.1; }
+        .file-input { display: none; }
+        .info-table { width: 82mm; margin-left: 2mm; border-collapse: collapse; margin-top: 8px; table-layout: fixed; }
+        .info-table td { padding: 1px 0px; vertical-align: middle; font-size: 6.2pt; height: 3.8mm; word-wrap: break-word; }
+        .val-left { width: 15mm; font-weight: bold; color: #111; text-align: left; white-space: nowrap; }
+        .lbl-left { width: 14mm; text-align: left; }
+        .colon-left { width: 1.5mm; text-align: center; }
+        .lbl-right { width: 33mm; text-align: right; padding-right: 1px; } 
+        .colon-right { width: 1.5mm; text-align: center; }
+        .val-right { width: 17mm; font-weight: bold; color: #111; text-align: left; padding-left: 2px; }
+        .value { font-weight: bold; color: #111; }
+        .sig-right { position: absolute; bottom: 1.5mm; right: 4mm; width: 32mm; text-align: center; border-top: 0.5px solid #777777; font-size: 5.5pt; cursor: move; z-index: 20; }
+        .sig-left { position: absolute; bottom: 1.5mm; left: 4mm; width: 30mm; text-align: center; border-top: 0.5px solid #777777; font-size: 5.5pt; padding-top: 1px; }
+        .sig-img-container { position: absolute; bottom: 12px; left: 0; width: 100%; height: 25px; display: flex; justify-content: center; align-items: flex-end; }
+        .sig-img { max-height: 100%; max-width: 100%; object-fit: contain; mix-blend-mode: multiply; display: none; }
+        .back-info-table { width: 82mm; margin: 2mm auto; border-collapse: collapse; }
+        .back-info-table td { padding: 1px 2px; vertical-align: middle; font-size: 6.5pt; height: 4.2mm; word-wrap: break-word; }
+        .back-label { width: 21mm; }
+        .return-section { text-align: center; font-size: 6.2pt; margin-top: 2mm; padding: 0 3mm; color: #222222; line-height: 1.3; }
+        .return-title { font-weight: bold; }
+        .return-company { font-weight: bold; font-size: 7.5pt; margin: 1px 0; }
+        .return-address { font-size: 6.5pt; }
+        
+        /* ব্যাকগ্রাউন্ড সাদা এবং আগের চেয়ে এক চুল নিচে নামানো হয়েছে */
+        .bottom-banner { position: absolute; bottom: 2px; left: 0; width: 100%; background-color: #ffffff; color: #2e5b2a; text-align: center; font-size: 6pt; font-weight: bold; padding: 3px 0; border-top: 1px solid #c5e1a5; }
+        
+        @media print { html, body { background-color: #ffffff; width: 210mm !important; } .control-bar { display: none; } .page-container { box-shadow: none; margin: 0; padding: 20mm 5mm; } }
+    </style>
+</head>
+<body>
+
+<div class="control-bar">
+    <div class="control-left">
+        <label style="color:#fff">ফন্ট:</label>
+        <select class="font-select" onchange="document.body.style.fontFamily = this.value">
+            <option value="'Siyam Rupali', Arial, sans-serif">Siyam Rupali</option>
+            <option value="Arial, sans-serif">Arial</option>
+            <option value="'Nikosh', Arial, sans-serif">Nikosh</option>
+            <option value="'Hind Siliguri', sans-serif">Kalpurush (Hind Siliguri)</option>
+            <option value="'SolaimanLipi', Arial, sans-serif">SolaimanLipi</option>
+        </select>
+        <button class="btn-sig" onclick="document.getElementById('masterSig').click()">স্বাক্ষর আপলোড</button>
+        <div class="logo-circle">
+            <span class="fmf-text">FMF</span>
+            <span class="nayon-text">Nayon</span>
+        </div>
+        <input type="file" id="masterSig" class="file-input" accept="image/*" onchange="updateAllSignatures(this)">
+    </div>
+    <div class="control-right">
+        <button class="btn-add" onclick="addNewIdCardPair()">নতুন কার্ড</button>
+        <button class="btn-print" onclick="window.print()">প্রিন্ট</button>
+    </div>
+</div>
+
+<div class="page-container">
+    <div id="mainGrid"></div>
+</div>
+
+<script>
+    let cardCount = 0;
+    function addNewIdCardPair() {
+        cardCount++;
+        const grid = document.getElementById('mainGrid');
+        const wrapper = document.createElement('div');
+        wrapper.className = 'card-pair-wrapper';
+        wrapper.innerHTML = `
+            <div class="id-card">
+                <div class="header">
+                    <div class="company-name">ফুটমার্ক ফুটওয়্যার লিমিটেড</div>
+                    <div class="company-address">৫৯/১, কর্ণপাড়া, সাভার, ঢাকা</div>
+                    <div class="photo-box" id="box${cardCount}" onclick="document.getElementById('file${cardCount}').click()">
+                        <span class="photo-text">ছবি</span>
+                        <img id="img${cardCount}" src="" style="display:none; width:100%; height:100%; object-fit:cover;">
+                        <input type="file" id="file${cardCount}" class="file-input" accept="image/*" onchange="preview(this, 'img${cardCount}', 'box${cardCount}')">
+                    </div>
+                </div>
+                <div class="title-bar"><span class="title-text">পরিচয়পত্র</span></div>
+                <table class="info-table">
+                    <tr><td class="lbl-left">আইডি নং</td><td class="colon-left">:</td><td class="val-left editable" contenteditable="true"></td><td class="lbl-right">ইস্যু তাং</td><td class="colon-right">:</td><td class="val-right editable" contenteditable="true"></td></tr>
+                    <tr><td class="lbl-left">লাইন নং</td><td class="colon-left">:</td><td class="val-left editable" contenteditable="true"></td><td class="lbl-right">পদবী</td><td class="colon-right">:</td><td class="val-right editable" contenteditable="true"></td></tr>
+                    <tr><td class="lbl-left">নাম</td><td class="colon-left">:</td><td class="val-left editable" contenteditable="true"></td><td class="lbl-right">গ্রেড</td><td class="colon-right">:</td><td class="val-right editable" contenteditable="true"></td></tr>
+                    <tr><td class="lbl-left">বিভাগ</td><td class="colon-left">:</td><td class="val-left editable" contenteditable="true"></td><td class="lbl-right">কাজের ধরণ</td><td class="colon-right">:</td><td class="val-right editable" contenteditable="true"></td></tr>
+                    <tr><td class="lbl-left">যোগদানের তাং</td><td class="colon-left">:</td><td class="val-left editable" contenteditable="true"></td><td class="lbl-right">মোবাইল নং</td><td class="colon-right">:</td><td class="val-right editable" contenteditable="true"></td></tr>
+                </table>
+                <div class="sig-left">গ্রহণকারীর স্বাক্ষর</div>
+                <div class="sig-right" onmousedown="dragElement(this)">মালিক/ব্যবস্থাপকের স্বাক্ষর<div class="sig-img-container"><img id="sigImg${cardCount}" class="sig-img" src=""></div></div>
+            </div>
+            <div class="id-card">
+                <table class="back-info-table">
+                    <tr><td class="back-label">জাতীয় পরিচয়পত্র</td><td>:</td><td class="value editable" contenteditable="true"></td><td class="back-label" style="padding-left:10px;">রক্তের গ্রুপ</td><td>:</td><td class="value editable" contenteditable="true"></td></tr>
+                    <tr><td class="back-label">জরুরী মোবাইল নং</td><td>:</td><td class="value editable" contenteditable="true"></td><td class="back-label" style="padding-left:10px;">ই-মেইল</td><td>:</td><td class="value editable" contenteditable="true"></td></tr>
+                    <tr><td class="back-label">ওয়েব সাইট</td><td>:</td><td class="value">www.footmarkbd.com</td><td class="back-label" style="padding-left:10px;">ফোন নং</td><td>:</td><td class="value editable" contenteditable="true"></td></tr>
+                    <tr><td class="back-label">স্থায়ী ঠিকানা</td><td>:</td><td class="value editable" colspan="4" contenteditable="true"></td></tr>
+                    <tr><td class="back-label">মেয়াদ</td><td>:</td><td class="value" colspan="4">পরবর্তী নির্দেশ না দেয়া পর্যন্ত বলবৎ থাকবে।</td></tr>
+                </table>
+                <div class="return-section">
+                    <div class="return-title">যদি কার্ডটি হারানো যায় তাহলে নিম্ন ঠিকানায় ফেরত প্রদানের জন্য অনুরোধ করা হলো।</div>
+                    <div class="return-company">ফুটমার্ক ফুটওয়্যার লিমিটেড</div>
+                    <div class="return-address">৫৯/১, কর্ণপাড়া, সাভার, ঢাকা</div>
+                </div>
+                <div class="bottom-banner">পরিচয় পত্রটি হারিয়ে গেলে তাৎক্ষনিক ব্যবস্থাপনা কর্তৃপক্ষকে জানাতে হবে।</div>
+            </div>`;
+        grid.appendChild(wrapper);
+    }
+    function dragElement(elmnt) {
+        let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+        elmnt.onmousedown = (e) => {
+            if (e.target.className === 'sig-right') {
+                e.preventDefault();
+                pos3 = e.clientX; pos4 = e.clientY;
+                document.onmousemove = (e) => {
+                    pos1 = pos3 - e.clientX; pos2 = pos4 - e.clientY;
+                    pos3 = e.clientX; pos4 = e.clientY;
+                    elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+                    elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+                };
+                document.onmouseup = () => { document.onmousemove = null; };
+            }
+        };
+    }
+    function updateAllSignatures(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const sigImages = document.querySelectorAll('.sig-img');
+                sigImages.forEach(img => { img.src = e.target.result; img.style.display = 'block'; });
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+    function preview(input, imgId, boxId) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = document.getElementById(imgId);
+                const box = document.getElementById(boxId);
+                img.src = e.target.result; img.style.display = 'block';
+                box.classList.add('has-image'); box.querySelector('.photo-text').style.display = 'none';
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+    addNewIdCardPair();
+</script>
+</body>
+  </html>
+                                                                                                    
